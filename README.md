@@ -1,2 +1,1 @@
-# ecg-app
-Web App for creation of sample ECG signals
+Animate ECG wave: https://demo.scichart.com/javascript-vital-signs-ecg-medical-chart-example
