@@ -5,7 +5,24 @@ const TimerForm = () => {
   const [time, setTime] = useState('00:30');
   const [type, setType] = useState('normal');
   const [bpm, setBpm] = useState('60');
-  const [filePath, setFilePath] = useState('');
+  const [fileUrl, setFileUrl] = useState('');
+
+  // Handle "Download File"
+  const handleDownload = () => {
+    fetch(fileUrl)
+      .then(response => response.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'recording_data.txt'); // This should match the file type you're expecting
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      })
+      .catch(e => console.error('Download error:', e));
+  };
   
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -26,7 +43,7 @@ const TimerForm = () => {
       console.log('Success:', data);
       if (data.status === 'success') {
         // Set the file path if file creation was successful
-        setFilePath(data.file_path);
+        setFileUrl(data.file_url);
       }
     })
     .catch((error) => {
@@ -66,11 +83,10 @@ const TimerForm = () => {
         </div>
         <button type="submit">Generate</button>
         {/* Conditionally render the download button */}
-        {filePath && (
-          <a href={filePath} download>
-            <button type="button">Download File</button>
-          </a>
-        )}
+        {/* Download button */}
+        {fileUrl && (
+        <button onClick={handleDownload}>Download File</button>
+      )}
       </form>
     </div>
   );

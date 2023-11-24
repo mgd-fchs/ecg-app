@@ -3,9 +3,14 @@ from flask_cors import CORS
 from app_utils import *
 
 import json
+from flask import send_from_directory
+
 
 app = Flask(__name__)
+app.config['STATIC_FOLDER'] = 'C:/_uni/ecg-app-git/frontend/static'
+
 CORS(app)
+
 
 @app.route('/api/data', methods=['GET'])
 def get_data():
@@ -13,12 +18,19 @@ def get_data():
     data = {"key": "value"}
     return jsonify(data)
 
+# Assuming your files are saved in a 'static' directory
+@app.route('/download/<filename>')
+def download_file(filename):
+    return send_from_directory(app.config['STATIC_FOLDER'], filename, as_attachment=True)
+
 
 
 @app.route('/generate', methods=['POST'])
 def generate_recording():
     if request.method == 'POST':
         # Parse the JSON data from the request
+
+        print(app.config['STATIC_FOLDER'])
         data = request.get_json()
         time = data.get('time')
         type_ = data.get('type')  # "type" is a built-in function in Python, consider renaming this variable
@@ -57,14 +69,16 @@ def generate_recording():
 
         # TODO: Handle file paths
 
-        file_path = './frontend/static/recording_data.txt'
-        with open(file_path, 'w') as file:
+        file_name = 'recording_data.txt'
+        full_file_path = app.config['STATIC_FOLDER'] + file_name
+
+        with open(full_file_path, 'w') as file:
             file.write(json.dumps(file_data))
 
-        full_file_path = 'C:/_uni/ecg-app-git/' + file_path
+        file_url = 'http://localhost:5000/' + '/download/' + file_name 
 
         # Send a success response and generated file back to the frontend
-        return jsonify({'status': 'success', 'message': 'Data received and validated!', 'file_path': full_file_path})
+        return jsonify({'status': 'success', 'message': 'Data received and validated!', 'file_path': full_file_path, 'file_url': file_url})
 
 
 if __name__ == '__main__':
