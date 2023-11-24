@@ -1,5 +1,3 @@
-# MODEL_PATH = "C:/_uni/ecg_data_generation/results/results-16272/results/models/gen_model_50.h5"
-
 import tensorflow as tf
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -25,7 +23,7 @@ def generate_output_sequence(results_folder, model_path, sec_to_create, bpm, typ
         gen_output = generator(seed, training=False)
         
         # Flatten the output and convert it to a string format
-        output_str = ','.join(map(str, gen_output.numpy().flatten()))
+        output_str = ','.join(map(str, gen_output.numpy().flatten()))+','
 
         # Define the file path
         file_path = f'{results_folder}/recording_data.csv'
@@ -36,5 +34,22 @@ def generate_output_sequence(results_folder, model_path, sec_to_create, bpm, typ
     
     return file_path
 
+
+## Quick test sequence creation
+# MODEL_PATH = "C:/_uni/ecg_data_generation/results/results-16272/results/models/gen_model_50.h5"
 # RES_FOLDER="C:/_uni/ecg-app-git/frontend/static"
-# generate_output_sequence(RES_FOLDER, MODEL_PATH, 300)
+# out_file = generate_output_sequence(RES_FOLDER, MODEL_PATH, 60, 60, "normal")
+
+# data = pd.read_csv(out_file, header=None, sep=',').iloc[0]
+
+# # If your CSV file has timestamps, replace 'range(len(data))' with your timestamp data
+# time_series = range(len(data))
+
+# # Plotting
+# plt.figure(figsize=(10, 6))
+# plt.plot(time_series, data)
+# plt.title('Time Series Plot')
+# plt.xlabel('Time')
+# plt.ylabel('Values')
+# plt.grid(True)
+# plt.show()
