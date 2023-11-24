@@ -15,7 +15,7 @@ const TimerForm = () => {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', 'recording_data.txt'); // This should match the file type you're expecting
+        link.setAttribute('download', 'recording_data.csv'); // This should match the file type you're expecting
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

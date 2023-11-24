@@ -1,13 +1,14 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from app_utils import *
-
-import json
 from flask import send_from_directory
+import json
 
+from app_utils import *
+from model_inference import *
 
 app = Flask(__name__)
 app.config['STATIC_FOLDER'] = 'C:/_uni/ecg-app-git/frontend/static'
+app.config['MODEL_PATH'] = "C:/_uni/ecg_data_generation/results/results-16272/results/models/gen_model_50.h5"
 
 CORS(app)
 
@@ -18,11 +19,11 @@ def get_data():
     data = {"key": "value"}
     return jsonify(data)
 
+
 # Assuming your files are saved in a 'static' directory
 @app.route('/download/<filename>')
 def download_file(filename):
     return send_from_directory(app.config['STATIC_FOLDER'], filename, as_attachment=True)
-
 
 
 @app.route('/generate', methods=['POST'])
@@ -69,11 +70,8 @@ def generate_recording():
 
         # TODO: Handle file paths
 
-        file_name = 'recording_data.txt'
-        full_file_path = app.config['STATIC_FOLDER'] + file_name
-
-        with open(full_file_path, 'w') as file:
-            file.write(json.dumps(file_data))
+        full_file_path = generate_output_sequence(app.config['STATIC_FOLDER'], app.config['MODEL_PATH'], time, bpm, type_)
+        file_name = os.path.split(full_file_path)[-1]
 
         file_url = 'http://localhost:5000/' + '/download/' + file_name 
 

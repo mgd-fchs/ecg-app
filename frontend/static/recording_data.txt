@@ -1,1 +1,0 @@
-{"time": 30, "type": "normal", "bpm": 60}
