@@ -5,7 +5,8 @@ const TimerForm = () => {
   const [time, setTime] = useState('00:30');
   const [type, setType] = useState('normal');
   const [bpm, setBpm] = useState('60');
-
+  const [filePath, setFilePath] = useState('');
+  
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -23,6 +24,10 @@ const TimerForm = () => {
     .then(response => response.json()) // assuming your Flask server responds with JSON
     .then(data => {
       console.log('Success:', data);
+      if (data.status === 'success') {
+        // Set the file path if file creation was successful
+        setFilePath(data.file_path);
+      }
     })
     .catch((error) => {
       console.error('Error:', error);
@@ -60,6 +65,12 @@ const TimerForm = () => {
           />
         </div>
         <button type="submit">Generate</button>
+        {/* Conditionally render the download button */}
+        {filePath && (
+          <a href={filePath} download>
+            <button type="button">Download File</button>
+          </a>
+        )}
       </form>
     </div>
   );

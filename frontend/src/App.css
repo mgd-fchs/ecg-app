@@ -7,13 +7,27 @@
   width: 100%; /* This ensures that your background covers the whole viewport width */
   margin: 0 0;
   padding: 0;
+  font-family: 'Arial', sans-serif;
+  text-align: center;
   display: flex;
   justify-content: center;
   align-items: center; /* These three lines center the content vertically and horizontally */
 }
 
-/* Rest of your CSS */
 
+.App-header {
+  font-family: 'Arial', sans-serif; /* Choose a font that suits your app's style */
+  color: #005f6b; /* Choose a color that complements your design */
+  background-color: #ffffff; /* A contrasting background for the heading */
+  padding: 10px 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px; /* Spacing between the header and the form */
+  margin-top: 0;
+  display: inline-block; /* To fit the width as per the content */
+  font-size: 1.5em; /* Larger font size for the heading */
+  text-align: top; /* Center the text */
+}
 
 .App-logo {
   height: 40vmin;
@@ -41,21 +55,7 @@
   color: #61dafb;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.App {
-  font-family: 'Arial', sans-serif; /* Your chosen font */
-  text-align: center; /* Center the content */
-}
-
 .App h1 {
-  color: #333; /* or whatever color you prefer */
-  font-weight: normal; /* or 'bold' if you prefer */
+  color: #333;
+  font-weight: normal;
 }

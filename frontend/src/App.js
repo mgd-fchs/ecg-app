@@ -5,7 +5,7 @@ import './App.css'; // make sure the path is correct
 function App() {
   return (
     <div className="App">
-      <h1>Recording Generator</h1>
+      <div className="App-header">Recording Generator</div>
       <TimerForm />
     </div>
   );
