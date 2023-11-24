@@ -1,0 +1,61 @@
+.App {
+  text-align: center;
+  animation: animatedBackground 20s linear infinite;
+  background: linear-gradient(270deg, #84fab0, #8fd3f4);
+  background-size: 400% 400%;
+  min-height: 100vh; /* This ensures that your background covers the whole viewport height */
+  width: 100%; /* This ensures that your background covers the whole viewport width */
+  margin: 0 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center; /* These three lines center the content vertically and horizontally */
+}
+
+/* Rest of your CSS */
+
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.App {
+  font-family: 'Arial', sans-serif; /* Your chosen font */
+  text-align: center; /* Center the content */
+}
+
+.App h1 {
+  color: #333; /* or whatever color you prefer */
+  font-weight: normal; /* or 'bold' if you prefer */
+}

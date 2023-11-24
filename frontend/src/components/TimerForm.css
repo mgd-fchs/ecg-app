@@ -1,0 +1,55 @@
+.form-container {
+  background: #f4f7f6;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+input,
+select,
+button {
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  margin-top: 5px;
+}
+
+button {
+  background-color: #008cba; /* Replace with your brand color */
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #005f6b; /* Darken the button on hover */
+}
+
+/* Add media query for responsiveness */
+@media (max-width: 600px) {
+  .form-container {
+    width: 90%;
+    padding: 15px;
+  }
+}
+
+/* Animation example for the background */
+@keyframes animatedBackground {
+  from { background-position: 0 0; }
+  to { background-position: 100% 0; }
+}
+
+.App {
+  animation: animatedBackground 20s linear infinite;
+  background: linear-gradient(270deg, #84fab0, #8fd3f4);
+  background-size: 400% 400%;
+}
