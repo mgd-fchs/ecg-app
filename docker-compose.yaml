@@ -1,0 +1,39 @@
+version: '3.8'
+services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./:/backend
+    environment:
+      - FLASK_ENV=development
+
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/frontend
+    stdin_open: true
+    tty: true
+    depends_on:
+      - backend
+
+  tf-serving:
+    image: tensorflow/serving
+    ports:
+      - "8501:8501"
+    volumes:
+      - C:/_uni/ecg-app-git/models/gen_model_36:/models/gan_model1
+      - C:/_uni/ecg-app-git/models/gen_model_50:/models/gan_model2
+      - C:/_uni/ecg-app-git/models/models.config:/models/models.config
+
+    command: --model_name=gan_model1 --model_base_path=/models/gan_model1
+
+    environment:
+      - MODEL_CONFIG_FILE=/models/models.config

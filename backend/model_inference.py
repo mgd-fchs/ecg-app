@@ -12,27 +12,27 @@ def load_model(model_path):
     return generator
 
 
-def generate_output_sequence(results_folder, model_path, sec_to_create, bpm, type):
+# def generate_output_sequence(results_folder, model_path, sec_to_create, bpm, type):
 
-    num_samples = sec_to_create // 10
-    generator = load_model(model_path)
-    noise_dim = 100 
+#     num_samples = sec_to_create // 10
+#     generator = load_model(model_path)
+#     noise_dim = 100 
 
-    for i in range(0, num_samples):
-        seed = np.random.normal(0, 1, (1, noise_dim))
-        gen_output = generator(seed, training=False)
+#     for i in range(0, num_samples):
+#         seed = np.random.normal(0, 1, (1, noise_dim))
+#         gen_output = generator(seed, training=False)
         
-        # Flatten the output and convert it to a string format
-        output_str = ','.join(map(str, gen_output.numpy().flatten()))+','
+#         # Flatten the output and convert it to a string format
+#         output_str = ','.join(map(str, gen_output.numpy().flatten()))+','
 
-        # Define the file path
-        file_path = f'{results_folder}/recording_data.csv'
+#         # Define the file path
+#         file_path = f'{results_folder}/recording_data.csv'
 
-        # Write the output to the file
-        with open(file_path, 'a') as file:
-            file.write(output_str)
+#         # Write the output to the file
+#         with open(file_path, 'a') as file:
+#             file.write(output_str)
     
-    return file_path
+#     return file_path
 
 
 ## Quick test sequence creation

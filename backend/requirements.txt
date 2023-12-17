@@ -3,3 +3,4 @@ tensorflow
 pandas
 matplotlib
 tqdm
+flask_cors

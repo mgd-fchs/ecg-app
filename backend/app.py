@@ -1,17 +1,20 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask import send_from_directory
+import requests
 import json
+import numpy as np
+import os
 
 from app_utils import *
-from model_inference import *
+
+# Import any other necessary modules
 
 app = Flask(__name__)
-app.config['STATIC_FOLDER'] = 'C:/_uni/ecg-app-git/frontend/static'
-app.config['MODEL_PATH'] = "C:/_uni/ecg_data_generation/results/results-16272/results/models/gen_model_50.h5"
+app.config['STATIC_FOLDER'] = '/frontend/static'
+app.config['TF_SERVING_URL'] = 'http://tf-serving:8501/v1/models/gan_model1:predict'
 
 CORS(app)
-
 
 @app.route('/api/data', methods=['GET'])
 def get_data():
@@ -20,7 +23,6 @@ def get_data():
     return jsonify(data)
 
 
-# Assuming your files are saved in a 'static' directory
 @app.route('/download/<filename>')
 def download_file(filename):
     return send_from_directory(app.config['STATIC_FOLDER'], filename, as_attachment=True)
@@ -29,16 +31,12 @@ def download_file(filename):
 @app.route('/generate', methods=['POST'])
 def generate_recording():
     if request.method == 'POST':
-        # Parse the JSON data from the request
-
-        print(app.config['STATIC_FOLDER'])
         data = request.get_json()
         time = data.get('time')
-        type_ = data.get('type')  # "type" is a built-in function in Python, consider renaming this variable
+        type_ = data.get('type')
         bpm = data.get('bpm')
 
         print(f"Time: {time}, Type: {type_}, BPM: {bpm}")
-
 
         # Convert time to seconds
         try:
@@ -60,23 +58,50 @@ def generate_recording():
         if bpm is None or bpm > 180 or bpm < 45:
             return jsonify({'status': 'error', 'message': 'BPM must be between 48 and 180'}), 400
 
-        # TODO: Dummy data creation, replace with actual data file
-        # TODO: Handle data (e.g., generate recording)
-        file_data = {
-            'time': time,
-            'type': type_,
-            'bpm': bpm
+
+        file_path = generate_output_sequence(app.config['STATIC_FOLDER'], time, bpm, type_)
+        file_name = os.path.split(file_path)[-1]
+        file_url = 'http://localhost:5000/download/' + file_name 
+
+        return jsonify({'status': 'success', 'message': 'Data processed!', 'file_url': file_url})
+
+
+def generate_output_sequence(results_folder, sec_to_create, bpm, type):
+    os.makedirs(results_folder, exist_ok = True)
+
+    num_samples = sec_to_create // 10
+    noise_dim = 100 
+    output_strings = []
+
+    for i in range(0, num_samples):
+        seed = np.random.normal(0, 1, (1, noise_dim)).tolist()
+        
+        # Prepare data for TensorFlow Serving
+        serving_data = {
+            "signature_name": "serving_default",
+            "instances": seed
         }
 
-        # TODO: Handle file paths
+        # Make a POST request to TensorFlow Serving
+        response = requests.post(app.config['TF_SERVING_URL'], json=serving_data)
 
-        full_file_path = generate_output_sequence(app.config['STATIC_FOLDER'], app.config['MODEL_PATH'], time, bpm, type_)
-        file_name = os.path.split(full_file_path)[-1]
+        if response.status_code == 200:
+            predictions = response.json()
+            gen_output = np.array(predictions['predictions'])
+            output_str = ','.join(map(str, gen_output.flatten()))+','
+            output_strings.append(output_str)
+        else:
+            raise ValueError(f"Error during TensorFlow Serving request: {response.text}")
 
-        file_url = 'http://localhost:5000/' + '/download/' + file_name 
+    # Define the file path
+    file_path = f'{results_folder}/recording_data.csv'
+    
+    # Write the outputs to the file
+    with open(file_path, 'w') as file:
+        for output_str in output_strings:
+            file.write(output_str)
 
-        # Send a success response and generated file back to the frontend
-        return jsonify({'status': 'success', 'message': 'Data received and validated!', 'file_path': full_file_path, 'file_url': file_url})
+    return file_path
 
 
 if __name__ == '__main__':
