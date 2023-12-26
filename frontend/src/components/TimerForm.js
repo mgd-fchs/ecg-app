@@ -6,6 +6,17 @@ const TimerForm = () => {
   const [type, setType] = useState('normal');
   const [bpm, setBpm] = useState('60');
   const [fileUrl, setFileUrl] = useState('');
+  const [showToast, setShowToast] = useState(false); 
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState(''); // For differentiating between error and success messages
+
+  const Toast = ({ message, type }) => {
+    return (
+      <div className={`toast-message ${type === 'success' ? 'success' : 'error'}`}>
+        {message}
+      </div>
+    );
+  };
 
   // Handle "Download File"
   const handleDownload = () => {
@@ -26,10 +37,14 @@ const TimerForm = () => {
   
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+    setShowToast(false); // Hide toast before new submission
+    // Clear previous messages
+    setMessage('');
+    setMessageType('');
+  
     // Data to be sent to the backend
     const data = { time, type, bpm };
-
+  
     // Send a POST request with the fetch API
     fetch('http://localhost:5000/generate', {
       method: 'POST',
@@ -38,19 +53,41 @@ const TimerForm = () => {
       },
       body: JSON.stringify(data),
     })
-    .then(response => response.json())
+    .then(response => {
+      // Check if the response was ok (status code 200-299)
+      if (!response.ok) {
+        // If response is not ok, we still want to parse the JSON body
+        // to get the error message sent from the server
+        return response.json().then(errData => {
+          throw new Error(errData.message || 'Something went wrong.');
+        });
+      }
+      return response.json();
+    })
     .then(data => {
-      console.log('Success:', data);
       if (data.status === 'success') {
-        // Set the file path if file creation was successful
         setFileUrl(data.file_url);
+        setMessage(data.message);
+        setMessageType('success');
+      } else {
+        setMessage(data.message || 'An unknown error occurred.');
+        setMessageType('error');
       }
     })
     .catch((error) => {
-      console.error('Error:', error);
+      setMessage(error.message || 'An error occurred while processing your request.');
+      setMessageType('error');
+    })
+    .finally(() => {
+      setShowToast(true); // Show toast after submission
+      setTimeout(() => {
+        setShowToast(false); // Hide toast after 3 seconds
+      }, 3000);
     });
   };
 
+  
+  
   return (
     <div className="form-container"> {}
       <form onSubmit={handleSubmit}>
@@ -88,6 +125,7 @@ const TimerForm = () => {
         <button onClick={handleDownload}>Download File</button>
       )}
       </form>
+      {showToast && <Toast message={message} type={messageType} />}
     </div>
   );
 };

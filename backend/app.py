@@ -37,34 +37,34 @@ def generate_recording():
         type_ = data.get('type')
         bpm = data.get('bpm')
 
-        # print(f"Time: {time}, Type: {type_}, BPM: {bpm}")
-
         # Convert time to seconds
         try:
             time = convert_time_to_seconds(time)
-            # print(time)
-
         except ValueError:
             return jsonify({'status': 'error', 'message': 'Invalid time format'}), 400
 
-        # Validate data
+        # Validate time
         if time is None or time > 300 or time < 10:
             return jsonify({'status': 'error', 'message': 'Time must be between 10 and 300 seconds'}), 400
 
+        # Validate BPM
         try:
             bpm = int(bpm)
+            if bpm < 45 or bpm > 180:
+                raise ValueError
         except ValueError:
-            return jsonify({'status': 'error', 'message': 'BPM must be an integer value'}), 400
-        
-        if bpm is None or bpm > 180 or bpm < 45:
-            return jsonify({'status': 'error', 'message': 'BPM must be between 48 and 180'}), 400
+            return jsonify({'status': 'error', 'message': 'BPM must be an integer between 45 and 180'}), 400
 
+        try:
+            file_path = generate_output_sequence(app.config['STATIC_FOLDER'], time, bpm, type_)
+        except Exception as e:
+            # Handle exceptions that might occur during file generation
+            return jsonify({'status': 'error', 'message': str(e)}), 500
 
-        file_path = generate_output_sequence(app.config['STATIC_FOLDER'], time, bpm, type_)
         file_name = os.path.split(file_path)[-1]
         file_url = 'http://localhost:5000/download/' + file_name 
 
-        return jsonify({'status': 'success', 'message': 'Data processed!', 'file_url': file_url})
+        return jsonify({'status': 'success', 'message': 'Data processed successfully!', 'file_url': file_url})
 
 
 def generate_output_sequence(results_folder, sec_to_create, bpm, type):
