@@ -53,3 +53,23 @@ A positive feature of the generated sequences is that some of them contain noise
 #### VAE
 
 ## Web App
+
+### Frontend
+The simple frontend is implemented in React. It features a form with three input fields: a time input for "Length of Recording" formatted as minutes and seconds, a dropdown selection for "Type" of recording, and a numerical input for "BPM" (beats per minute). There are also two buttons: one to "Generate" the recording and another to "Download File", which appears once the generated file is ready.
+
+### Backend
+The backend of our web application serves as the API layer, built using Flask, a lightweight and versatile web framework in Python. This component is responsible for handling HTTP requests from the frontend, processing these requests, interfacing with the TensorFlow Serving component for model inferences, and returning the appropriate responses.
+
+More precisely, it runs inference on the model served through TF Serving, concatenates generated sequences to the desired length, and modulates heart rate accordingly.
+
+The generated file is provided for download through the frontend.
+
+### Model Serving
+
+The app implements a robust model serving architecture utilizing TensorFlow Serving, which is specifically engineered to serve machine learning models in a production environment.
+
+The machine learning models are stored on a persistent filesystem and are accessed by the TF-Serving container. TensorFlow Serving is configured via a models.config file, which specifies the names and filesystem paths of the models to be served. The configuration allows TensorFlow Serving to automatically detect and serve multiple models, handling requests for different models and model versions.
+
+Upon receiving an inference request, the Backend Service sends a RESTful API call to the TF-Serving service. The request includes the model name and the input data for inference. TensorFlow Serving processes the request, performing the inference using the specified model, and returns the prediction results to the Backend Service, which then relays them to the client.
+
+The architecture supports concurrent processing of multiple models and versions, enabling horizontal scalability and redundancy. This is crucial for high availability and to handle potential spikes in request volume.

@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask import send_from_directory
+from scipy.interpolate import interp1d
 import requests
 import json
 import numpy as np
@@ -36,12 +37,12 @@ def generate_recording():
         type_ = data.get('type')
         bpm = data.get('bpm')
 
-        print(f"Time: {time}, Type: {type_}, BPM: {bpm}")
+        # print(f"Time: {time}, Type: {type_}, BPM: {bpm}")
 
         # Convert time to seconds
         try:
             time = convert_time_to_seconds(time)
-            print(time)
+            # print(time)
 
         except ValueError:
             return jsonify({'status': 'error', 'message': 'Invalid time format'}), 400
@@ -69,9 +70,13 @@ def generate_recording():
 def generate_output_sequence(results_folder, sec_to_create, bpm, type):
     os.makedirs(results_folder, exist_ok = True)
 
-    num_samples = sec_to_create // 10
+    default_bpm = 45
+    sample_frequency = 128
+    num_samples = (sec_to_create / 10)
+    num_samples = int(np.ceil((bpm/default_bpm)*num_samples))+10
     noise_dim = 100 
     output_strings = []
+    combined_output = np.array([])
 
     for i in range(0, num_samples):
         seed = np.random.normal(0, 1, (1, noise_dim)).tolist()
@@ -88,18 +93,20 @@ def generate_output_sequence(results_folder, sec_to_create, bpm, type):
         if response.status_code == 200:
             predictions = response.json()
             gen_output = np.array(predictions['predictions'])
-            output_str = ','.join(map(str, gen_output.flatten()))+','
-            output_strings.append(output_str)
+            combined_output = np.concatenate((combined_output, gen_output.flatten()))
+            
+            # output_str = ','.join(map(str, gen_output.flatten()))+','
+            # output_strings.append(output_str)
         else:
             raise ValueError(f"Error during TensorFlow Serving request: {response.text}")
 
-    # Define the file path
+    # Adjust hear rate
+    print("Adjusting heart rate")
+    output_df = modulate_bpm(sec_to_create, bpm, combined_output, default_bpm, sample_frequency)
+
+    # Write to csv
     file_path = f'{results_folder}/recording_data.csv'
-    
-    # Write the outputs to the file
-    with open(file_path, 'w') as file:
-        for output_str in output_strings:
-            file.write(output_str)
+    output_df.to_csv(file_path, index=False)
 
     return file_path
 

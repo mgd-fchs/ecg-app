@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './TimerForm.css'; // make sure the path is correct
+import './TimerForm.css'; 
 
 const TimerForm = () => {
   const [time, setTime] = useState('00:30');
@@ -15,7 +15,7 @@ const TimerForm = () => {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', 'recording_data.csv'); // This should match the file type you're expecting
+        link.setAttribute('download', 'recording_data.csv');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -31,14 +31,14 @@ const TimerForm = () => {
     const data = { time, type, bpm };
 
     // Send a POST request with the fetch API
-    fetch('http://localhost:5000/generate', { // make sure the URL points to your Flask server
+    fetch('http://localhost:5000/generate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(data),
     })
-    .then(response => response.json()) // assuming your Flask server responds with JSON
+    .then(response => response.json())
     .then(data => {
       console.log('Success:', data);
       if (data.status === 'success') {
@@ -52,7 +52,7 @@ const TimerForm = () => {
   };
 
   return (
-    <div className="form-container"> {/* Apply the style here */}
+    <div className="form-container"> {}
       <form onSubmit={handleSubmit}>
         <div>
           <label>Length of Recording (min:seconds): </label>
