@@ -29,11 +29,14 @@ services:
     ports:
       - "8501:8501"
     volumes:
-      - C:/_uni/ecg-app-git/models/gen_model_36:/models/gan_model1
-      - C:/_uni/ecg-app-git/models/gen_model_50:/models/gan_model2
-      - C:/_uni/ecg-app-git/models/models.config:/models/models.config
-
-    command: --model_name=gan_model1 --model_base_path=/models/gan_model1
-
-    environment:
-      - MODEL_CONFIG_FILE=/models/models.config
+      - type: bind
+        source: C:/_uni/ecg-app-git/models/gen_model_36
+        target: /models/gan_model1
+      - type: bind
+        source: C:/_uni/ecg-app-git/models/gen_model_50
+        target: /models/gan_model2
+      - type: bind
+        source: C:/_uni/ecg-app-git/models/models.config
+        target: /models/models.config
+    
+    command: tensorflow/serving --model_config_file=/models/models.config
