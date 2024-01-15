@@ -8,12 +8,29 @@ import numpy as np
 import os
 
 from app_utils import *
+import logging
 
-# Import any other necessary modules
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
+def log_request_response(request, response):
+    request_data = request.get_json() if request.method == 'POST' else {}
+    logging.info(f"Request URL: {request.url}")
+    logging.info(f"Request Method: {request.method}")
+    logging.info(f"Request Data: {request_data}")
+    logging.info(f"Response Data: {response}")
+
+def log_external_request_response(url, request_data, response):
+    logging.info(f"External Request URL: {url}")
+    logging.info(f"Request Data: {request_data}")
+    logging.info(f"Response Status Code: {response.status_code}")
+    logging.info(f"Response Data: {response.text}")
+
+
 
 app = Flask(__name__)
 app.config['STATIC_FOLDER'] = '/frontend/static'
-app.config['TF_SERVING_URL'] = 'http://tf-serving:8501/v1/models/gan_model1:predict'
+app.config['TF_SERVING_URL'] = 'http://tf-serving:8501/v1/models/'
 
 CORS(app)
 
@@ -37,6 +54,8 @@ def generate_recording():
         type_ = data.get('type')
         bpm = data.get('bpm')
 
+        log_request_response(request, data)
+        print(f"Got data: {type_}")
         # Convert time to seconds
         try:
             time = convert_time_to_seconds(time)
@@ -67,7 +86,7 @@ def generate_recording():
         return jsonify({'status': 'success', 'message': 'Data processed successfully!', 'file_url': file_url})
 
 
-def generate_output_sequence(results_folder, sec_to_create, bpm, type):
+def generate_output_sequence(results_folder, sec_to_create, bpm, type_):
     os.makedirs(results_folder, exist_ok = True)
 
     default_bpm = 45
@@ -88,15 +107,15 @@ def generate_output_sequence(results_folder, sec_to_create, bpm, type):
         }
 
         # Make a POST request to TensorFlow Serving
-        response = requests.post(app.config['TF_SERVING_URL'], json=serving_data)
+        model_url = app.config['TF_SERVING_URL'] + f"{type_}:predict"
+        response = requests.post(model_url, json=serving_data)
+        log_external_request_response(model_url, serving_data, response)
 
         if response.status_code == 200:
             predictions = response.json()
             gen_output = np.array(predictions['predictions'])
             combined_output = np.concatenate((combined_output, gen_output.flatten()))
-            
-            # output_str = ','.join(map(str, gen_output.flatten()))+','
-            # output_strings.append(output_str)
+
         else:
             raise ValueError(f"Error during TensorFlow Serving request: {response.text}")
 

@@ -3,7 +3,7 @@ import './TimerForm.css';
 
 const TimerForm = () => {
   const [time, setTime] = useState('00:30');
-  const [type, setType] = useState('normal');
+  const [type, setType] = useState('gan_model1');
   const [bpm, setBpm] = useState('60');
   const [fileUrl, setFileUrl] = useState('');
   const [showToast, setShowToast] = useState(false); 
@@ -104,8 +104,9 @@ const TimerForm = () => {
         <div>
           <label>Type: </label>
           <select value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="normal">Normal</option>
-            <option value="arrhythmia">Arrhythmia</option>
+            <option value="gan_model1">Custom GAN 1</option>
+            <option value="gan_model2">Custom GAN 2</option>
+            <option value="time_vae">TimeVAE</option>
           </select>
         </div>
         <div>
