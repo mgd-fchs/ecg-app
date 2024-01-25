@@ -85,12 +85,11 @@ const TimerForm = () => {
       }, 3000);
     });
   };
-
-  
-  
+ 
   return (
-    <div className="form-container"> {}
+    <div className="form-container">
       <form onSubmit={handleSubmit}>
+        {/* Form fields and Generate button */}
         <div>
           <label>Length of Recording (min:seconds): </label>
           <input
@@ -120,12 +119,13 @@ const TimerForm = () => {
           />
         </div>
         <button type="submit">Generate</button>
-        {/* Conditionally render the download button */}
-        {/* Download button */}
-        {fileUrl && (
+      </form>
+
+      {/* Conditionally render the download button outside the form */}
+      {fileUrl && (
         <button onClick={handleDownload}>Download File</button>
       )}
-      </form>
+
       {showToast && <Toast message={message} type={messageType} />}
     </div>
   );

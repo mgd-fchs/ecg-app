@@ -8,6 +8,10 @@ services:
       - "5000:5000"
     volumes:
       - ./:/backend
+      - type: bind
+        source: ./data
+        target: /data
+
     environment:
       - FLASK_ENV=development
 
@@ -30,19 +34,18 @@ services:
       - "8501:8501"
     volumes:
       - type: bind
-        source: C:/_uni/ecg-app-git/models/gen_model_36
+        source: ./models/gen_model_36
         target: /models/gan_model1
       - type: bind
-        source: C:/_uni/ecg-app-git/models/gen_model_50
+        source: ./models/gen_model_50
         target: /models/gan_model2
       - type: bind
-        source: C:/_uni/ecg-app-git/models/vae_encoder
+        source: ./models/vae_encoder
         target: /models/vae_encoder
       - type: bind
-        source: C:/_uni/ecg-app-git/models/vae_decoder
+        source: ./models/vae_decoder
         target: /models/vae_decoder
       - type: bind
-        source: C:/_uni/ecg-app-git/models/models.config
+        source: ./models/models.config
         target: /models/models.config
-    
     command: tensorflow/serving --model_config_file=/models/models.config

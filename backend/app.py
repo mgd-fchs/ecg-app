@@ -7,6 +7,8 @@ import json
 import numpy as np
 import heartpy as hp
 import os
+import tensorflow as tf
+import pandas as pd
 
 from app_utils import *
 import logging
@@ -93,7 +95,6 @@ def generate_recording():
 def generate_output_sequence(results_folder, sec_to_create, bpm, type_):
     os.makedirs(results_folder, exist_ok = True)
 
-    default_bpm = 45
     sample_frequency = 128
     num_samples = (sec_to_create / 10)
     num_samples = int(num_samples)*10
@@ -101,39 +102,88 @@ def generate_output_sequence(results_folder, sec_to_create, bpm, type_):
     output_strings = []
     combined_output = np.array([])
 
-    for i in range(0, num_samples):
-        seed = np.random.normal(0, 1, (1, noise_dim)).tolist()
+    if "gan" in type_:
+        for i in range(0, num_samples):
+            seed = np.random.normal(0, 1, (1, noise_dim)).tolist()
+            
+            # Prepare data for TensorFlow Serving
+            serving_data = {
+                "signature_name": "serving_default",
+                "instances": seed
+            }
+
+            # Make a POST request to TensorFlow Serving
+            logging.info(f"Model type selected: {type_}")          
+            model_url = app.config['TF_SERVING_URL'] + f"{type_}:predict"
+            response = requests.post(model_url, json=serving_data)
+            # log_external_request_response(model_url, serving_data, response)
+
+            if response.status_code == 200:
+                predictions = response.json()
+                gen_output = np.array(predictions['predictions'])
+
+                wd, m = hp.process(gen_output.flatten(), sample_frequency)
+                gen_bpm = m['bpm']
+
+                combined_output = np.concatenate((combined_output, gen_output.flatten()))
+
+            else:
+                raise ValueError(f"Error during TensorFlow Serving request: {response.text}")
+    
+    elif "vae" in type_:
+        signals = pd.read_csv('/data/sample_signals.csv', header=0)
+        signals = signals[0:50000].astype(np.float32)
+        signals = np.expand_dims(signals, axis=-1)  # Expand dims to match input_shape
+        signals = tf.data.Dataset.from_tensor_slices(signals).batch(32)
+        shuffled_dataset = signals.shuffle(len(signals))
         
-        # Prepare data for TensorFlow Serving
-        serving_data = {
-            "signature_name": "serving_default",
-            "instances": seed
-        }
+        latent_dim = 100
 
-        # Make a POST request to TensorFlow Serving
-        model_url = app.config['TF_SERVING_URL'] + f"{type_}:predict"
-        response = requests.post(model_url, json=serving_data)
-        # log_external_request_response(model_url, serving_data, response)
+        encoder_url = app.config['TF_SERVING_URL'] + "vae_encoder:predict"
+        decoder_url = app.config['TF_SERVING_URL'] + "vae_decoder:predict"
 
-        if response.status_code == 200:
-            predictions = response.json()
-            gen_output = np.array(predictions['predictions'])
+        combined_output = np.array([])
+        for i in range(num_samples):
+            original_sample = next(iter(shuffled_dataset.take(1)))
 
-            wd, m = hp.process(gen_output.flatten(), sample_frequency)
-            gen_bpm = m['bpm']
+            # Function to make request to TFServing and get latent vector
+            def get_latent_vector(sample):
+                encoder_data = {"signature_name": "serving_default", "instances": sample.numpy().reshape(1, -1).tolist()}
+                logging.info(f"Encoder data: {encoder_data}")
 
-            combined_output = np.concatenate((combined_output, gen_output.flatten()))
+                response = requests.post(encoder_url, json=encoder_data)
+                if response.status_code == 200:
+                    return np.array(response.json()['predictions'])[2]
+                else:
+                    raise ValueError(f"Error during TensorFlow Serving request: {response.text}")
 
-        else:
-            raise ValueError(f"Error during TensorFlow Serving request: {response.text}")
+            p1 = get_latent_vector(original_sample)
+            p2 = get_latent_vector(next(iter(shuffled_dataset.take(1))))
 
-    # Adjust hear rate
+            interpolated_points = interpolate_points(p1, p2, n_steps=1)
+            interpolated_points_array = np.array(interpolated_points)
+            interpolated_points_reshaped = interpolated_points_array.reshape(-1, latent_dim)
+
+            # Prepare data for TFServing (Decoder or full VAE model)
+            model_data = {"signature_name": "serving_default", "instances": interpolated_points_reshaped.tolist()}
+            model_response = requests.post(decoder_url, json=model_data)  # Change to vae_url if using full VAE model
+
+            if model_response.status_code == 200:
+                sample = np.array(model_response.json()['predictions'])
+                sample_reshaped = tf.reshape(sample, (1, -1, 1))
+
+                reconstructed_signal = sample.flatten()
+                combined_output = np.concatenate((combined_output, reconstructed_signal))
+            else:
+                raise ValueError(f"Error during TensorFlow Serving request: {model_response.text}")
+
+    # Adjust heart rate
 
     logging.info(f"Combined output size: {combined_output.size}")
     wd, m = hp.process(combined_output, sample_frequency)
     original_bpm = m['bpm']
     original_bpm = 55
-    
+
     logging.info(f"Original BPM: {original_bpm}")
 
     output_df = modulate_bpm(sec_to_create, bpm, combined_output, original_bpm, sample_frequency)

@@ -10,9 +10,16 @@ import scipy.interpolate
 logging.basicConfig(level=logging.INFO)
 
 
+def interpolate_points(p1, p2, n_steps=10):
+    """ Linear interpolation between two points in the latent space. """
+    ratios = np.linspace(0, 1, num=n_steps)
+    return [(1.0 - ratio) * p1 + ratio * p2 for ratio in ratios]
+
+
 def convert_time_to_seconds(time_str):
     minutes, seconds = map(int, time_str.split(':'))
     return minutes * 60 + seconds
+
 
 def max_abs_val_interval(interval):
     # Find the index of the value with the maximum absolute value
