@@ -5,13 +5,15 @@ from scipy.interpolate import interp1d
 import requests
 import json
 import numpy as np
+import heartpy as hp
 import os
 
 from app_utils import *
 import logging
 
-# Configure logging
+# Set up logging
 logging.basicConfig(level=logging.INFO)
+# logger = logging.getLogger(__name__)
 
 def log_request_response(request, response):
     request_data = request.get_json() if request.method == 'POST' else {}
@@ -43,6 +45,8 @@ def get_data():
 
 @app.route('/download/<filename>')
 def download_file(filename):
+    logging.info(f"Providing download: {filename}")
+
     return send_from_directory(app.config['STATIC_FOLDER'], filename, as_attachment=True)
 
 
@@ -54,7 +58,7 @@ def generate_recording():
         type_ = data.get('type')
         bpm = data.get('bpm')
 
-        log_request_response(request, data)
+        # log_request_response(request, data)
         print(f"Got data: {type_}")
         # Convert time to seconds
         try:
@@ -73,7 +77,7 @@ def generate_recording():
                 raise ValueError
         except ValueError:
             return jsonify({'status': 'error', 'message': 'BPM must be an integer between 45 and 180'}), 400
-
+        
         try:
             file_path = generate_output_sequence(app.config['STATIC_FOLDER'], time, bpm, type_)
         except Exception as e:
@@ -92,7 +96,7 @@ def generate_output_sequence(results_folder, sec_to_create, bpm, type_):
     default_bpm = 45
     sample_frequency = 128
     num_samples = (sec_to_create / 10)
-    num_samples = int(np.ceil((bpm/default_bpm)*num_samples))+10
+    num_samples = int(num_samples)*10
     noise_dim = 100 
     output_strings = []
     combined_output = np.array([])
@@ -109,19 +113,32 @@ def generate_output_sequence(results_folder, sec_to_create, bpm, type_):
         # Make a POST request to TensorFlow Serving
         model_url = app.config['TF_SERVING_URL'] + f"{type_}:predict"
         response = requests.post(model_url, json=serving_data)
-        log_external_request_response(model_url, serving_data, response)
+        # log_external_request_response(model_url, serving_data, response)
 
         if response.status_code == 200:
             predictions = response.json()
             gen_output = np.array(predictions['predictions'])
+
+            wd, m = hp.process(gen_output.flatten(), sample_frequency)
+            gen_bpm = m['bpm']
+
             combined_output = np.concatenate((combined_output, gen_output.flatten()))
 
         else:
             raise ValueError(f"Error during TensorFlow Serving request: {response.text}")
 
     # Adjust hear rate
-    print("Adjusting heart rate")
-    output_df = modulate_bpm(sec_to_create, bpm, combined_output, default_bpm, sample_frequency)
+
+    logging.info(f"Combined output size: {combined_output.size}")
+    wd, m = hp.process(combined_output, sample_frequency)
+    original_bpm = m['bpm']
+    original_bpm = 55
+    
+    logging.info(f"Original BPM: {original_bpm}")
+
+    output_df = modulate_bpm(sec_to_create, bpm, combined_output, original_bpm, sample_frequency)
+    wd, m = hp.process(gen_output.flatten(), sample_frequency)
+    gen_bpm = m['bpm']
 
     # Write to csv
     file_path = f'{results_folder}/recording_data.csv'

@@ -36,6 +36,12 @@ services:
         source: C:/_uni/ecg-app-git/models/gen_model_50
         target: /models/gan_model2
       - type: bind
+        source: C:/_uni/ecg-app-git/models/vae_encoder
+        target: /models/vae_encoder
+      - type: bind
+        source: C:/_uni/ecg-app-git/models/vae_decoder
+        target: /models/vae_decoder
+      - type: bind
         source: C:/_uni/ecg-app-git/models/models.config
         target: /models/models.config
     
