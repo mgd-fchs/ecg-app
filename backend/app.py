@@ -9,6 +9,7 @@ import heartpy as hp
 import os
 import tensorflow as tf
 import pandas as pd
+import random
 
 from app_utils import *
 import logging
@@ -131,46 +132,40 @@ def generate_output_sequence(results_folder, sec_to_create, bpm, type_):
                 raise ValueError(f"Error during TensorFlow Serving request: {response.text}")
     
     elif "vae" in type_:
-        signals = pd.read_csv('/data/sample_signals.csv', header=0)
-        signals = signals[0:50000].astype(np.float32)
-        signals = np.expand_dims(signals, axis=-1)  # Expand dims to match input_shape
-        signals = tf.data.Dataset.from_tensor_slices(signals).batch(32)
-        shuffled_dataset = signals.shuffle(len(signals))
+        latent_vectors = np.load('/data/latent_vectors.npz')
+        latent_vectors = [latent_vectors[key] for key in latent_vectors]
+        
+        # signals = signals[0:50000].astype(np.float32)
+        # signals = np.expand_dims(signals, axis=-1)  # Expand dims to match input_shape
+        # signals = tf.data.Dataset.from_tensor_slices(signals).batch(32)
+        # shuffled_dataset = signals.shuffle(len(signals))
         
         latent_dim = 100
 
-        encoder_url = app.config['TF_SERVING_URL'] + "vae_encoder:predict"
+        # encoder_url = app.config['TF_SERVING_URL'] + "vae_encoder:predict"
         decoder_url = app.config['TF_SERVING_URL'] + "vae_decoder:predict"
 
         combined_output = np.array([])
         for i in range(num_samples):
-            original_sample = next(iter(shuffled_dataset.take(1)))
+            # original_sample = next(iter(shuffled_dataset.take(1)))
+            # original_sample = next(iter(shuffled_dataset.take(1))).numpy().reshape(1, -1)
 
-            # Function to make request to TFServing and get latent vector
-            def get_latent_vector(sample):
-                encoder_data = {"signature_name": "serving_default", "instances": sample.numpy().reshape(1, -1).tolist()}
-                logging.info(f"Encoder data: {encoder_data}")
-
-                response = requests.post(encoder_url, json=encoder_data)
-                if response.status_code == 200:
-                    return np.array(response.json()['predictions'])[2]
-                else:
-                    raise ValueError(f"Error during TensorFlow Serving request: {response.text}")
-
-            p1 = get_latent_vector(original_sample)
-            p2 = get_latent_vector(next(iter(shuffled_dataset.take(1))))
+            p1, p2 = random.sample(latent_vectors, 2)
 
             interpolated_points = interpolate_points(p1, p2, n_steps=1)
             interpolated_points_array = np.array(interpolated_points)
+            logging.info(f"Interp points array size: {interpolated_points_array.shape}")
             interpolated_points_reshaped = interpolated_points_array.reshape(-1, latent_dim)
+            logging.info(f"Interp points array reshaped size: {interpolated_points_reshaped.shape}")
 
-            # Prepare data for TFServing (Decoder or full VAE model)
+            # Ensure that the data is a 2D array
             model_data = {"signature_name": "serving_default", "instances": interpolated_points_reshaped.tolist()}
+            # model_data = {"signature_name": "serving_default", "instances": interpolated_points_array.tolist()}
             model_response = requests.post(decoder_url, json=model_data)  # Change to vae_url if using full VAE model
 
             if model_response.status_code == 200:
                 sample = np.array(model_response.json()['predictions'])
-                sample_reshaped = tf.reshape(sample, (1, -1, 1))
+                # sample_reshaped = tf.reshape(sample, (1, -1, 1))
 
                 reconstructed_signal = sample.flatten()
                 combined_output = np.concatenate((combined_output, reconstructed_signal))
@@ -187,7 +182,7 @@ def generate_output_sequence(results_folder, sec_to_create, bpm, type_):
     logging.info(f"Original BPM: {original_bpm}")
 
     output_df = modulate_bpm(sec_to_create, bpm, combined_output, original_bpm, sample_frequency)
-    wd, m = hp.process(gen_output.flatten(), sample_frequency)
+    wd, m = hp.process(combined_output.flatten(), sample_frequency)
     gen_bpm = m['bpm']
 
     # Write to csv
