@@ -104,6 +104,8 @@ def generate_output_sequence(results_folder, sec_to_create, bpm, type_):
     combined_output = np.array([])
 
     if "gan" in type_:
+        original_bpm = 55
+
         for i in range(0, num_samples):
             seed = np.random.normal(0, 1, (1, noise_dim)).tolist()
             
@@ -134,23 +136,21 @@ def generate_output_sequence(results_folder, sec_to_create, bpm, type_):
     elif "vae" in type_:
         latent_vectors = np.load('/data/latent_vectors.npz')
         latent_vectors = [latent_vectors[key] for key in latent_vectors]
-        
-        # signals = signals[0:50000].astype(np.float32)
-        # signals = np.expand_dims(signals, axis=-1)  # Expand dims to match input_shape
-        # signals = tf.data.Dataset.from_tensor_slices(signals).batch(32)
-        # shuffled_dataset = signals.shuffle(len(signals))
-        
-        latent_dim = 100
 
-        # encoder_url = app.config['TF_SERVING_URL'] + "vae_encoder:predict"
+        latent_dim = 100
         decoder_url = app.config['TF_SERVING_URL'] + "vae_decoder:predict"
 
+        original_bpm = 65
         combined_output = np.array([])
+        
         for i in range(num_samples):
-            # original_sample = next(iter(shuffled_dataset.take(1)))
-            # original_sample = next(iter(shuffled_dataset.take(1))).numpy().reshape(1, -1)
+            # Randomly select an index for p1
+            p1_index = random.randint(0, len(latent_vectors) - 1)
+            p1 = latent_vectors[p1_index]
 
-            p1, p2 = random.sample(latent_vectors, 2)
+            # Select p2 as the next element in the list
+            p2_index = (p1_index + 1) % len(latent_vectors)
+            p2 = latent_vectors[p2_index]
 
             interpolated_points = interpolate_points(p1, p2, n_steps=1)
             interpolated_points_array = np.array(interpolated_points)
@@ -176,10 +176,9 @@ def generate_output_sequence(results_folder, sec_to_create, bpm, type_):
 
     logging.info(f"Combined output size: {combined_output.size}")
     wd, m = hp.process(combined_output, sample_frequency)
-    original_bpm = m['bpm']
-    original_bpm = 55
+    calculated_bpm = m['bpm']
 
-    logging.info(f"Original BPM: {original_bpm}")
+    logging.info(f"Original BPM: {calculated_bpm}")
 
     output_df = modulate_bpm(sec_to_create, bpm, combined_output, original_bpm, sample_frequency)
     wd, m = hp.process(combined_output.flatten(), sample_frequency)

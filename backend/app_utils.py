@@ -30,26 +30,21 @@ def max_abs_val_interval(interval):
 
 def modulate_bpm(sec_to_create, new_bpm, original_ecg, original_bpm, sampling_freq):
 
-    def max_abs_val_interval(series):
-        return series.abs().max()
-
-    # # Create a time series DataFrame
     # time_index = pd.date_range(start='2024-01-01', periods=len(original_ecg), freq=f'{round(original_interval_ms)}L')
     df = pd.DataFrame({'Value': original_ecg})
 
     logging.info(f"New BPM: {new_bpm}")
     logging.info(f"Original BPM: {original_bpm}")
 
-    # Resample the DataFrame
+    # Resample df
     if new_bpm > original_bpm:
         scaling_factor = new_bpm / original_bpm
 
         logging.info(f"Scaling factor: {scaling_factor}")
 
-        # Initialize the resampled ECG
         resampled = []
 
-        # Calculate the size of each interval and iterate over them
+        # Calculate size of each interval and iterate over them
         index = 0
         while index < len(original_ecg):
             next_index = min(len(original_ecg), math.ceil((index + 1) * scaling_factor))
