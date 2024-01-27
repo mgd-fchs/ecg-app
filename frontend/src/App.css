@@ -3,30 +3,30 @@
   animation: animatedBackground 20s linear infinite;
   background: linear-gradient(270deg, #84fab0, #8fd3f4);
   background-size: 400% 400%;
-  min-height: 100vh; /* This ensures that your background covers the whole viewport height */
-  width: 100%; /* This ensures that your background covers the whole viewport width */
+  min-height: 100vh; 
+  width: 100%;
   margin: 0 0;
   padding: 0;
   font-family: 'Arial', sans-serif;
   text-align: center;
   display: flex;
   justify-content: center;
-  align-items: center; /* These three lines center the content vertically and horizontally */
+  align-items: center;
 }
 
 
 .App-header {
-  font-family: 'Arial', sans-serif; /* Choose a font that suits your app's style */
-  color: #005f6b; /* Choose a color that complements your design */
-  background-color: #ffffff; /* A contrasting background for the heading */
+  font-family: 'Arial', sans-serif; 
+  color: #005f6b; 
+  background-color: #ffffff; 
   padding: 10px 20px;
   border-radius: 5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px; /* Spacing between the header and the form */
+  margin-bottom: 20px; 
   margin-top: 0;
-  display: inline-block; /* To fit the width as per the content */
-  font-size: 1.5em; /* Larger font size for the heading */
-  text-align: top; /* Center the text */
+  display: inline-block; 
+  font-size: 1.5em;
+  text-align: top; 
 }
 
 .App-logo {

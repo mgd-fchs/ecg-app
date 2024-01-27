@@ -10,26 +10,9 @@ import os
 import tensorflow as tf
 import pandas as pd
 import random
-
+from flask import url_for
 from app_utils import *
 import logging
-
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-# logger = logging.getLogger(__name__)
-
-def log_request_response(request, response):
-    request_data = request.get_json() if request.method == 'POST' else {}
-    logging.info(f"Request URL: {request.url}")
-    logging.info(f"Request Method: {request.method}")
-    logging.info(f"Request Data: {request_data}")
-    logging.info(f"Response Data: {response}")
-
-def log_external_request_response(url, request_data, response):
-    logging.info(f"External Request URL: {url}")
-    logging.info(f"Request Data: {request_data}")
-    logging.info(f"Response Status Code: {response.status_code}")
-    logging.info(f"Response Data: {response.text}")
 
 
 
@@ -39,22 +22,19 @@ app.config['TF_SERVING_URL'] = 'http://tf-serving:8501/v1/models/'
 
 CORS(app)
 
-@app.route('/api/data', methods=['GET'])
-def get_data():
-    # Replace this with actual data retrieval logic
-    data = {"key": "value"}
-    return jsonify(data)
-
 
 @app.route('/download/<filename>')
 def download_file(filename):
-    logging.info(f"Providing download: {filename}")
+    """Serve a file from the static folder for download."""
 
+    logging.info(f"Providing download: {filename}")
     return send_from_directory(app.config['STATIC_FOLDER'], filename, as_attachment=True)
 
 
 @app.route('/generate', methods=['POST'])
 def generate_recording():
+    """Generate a synthetic recording and serve it for download."""
+
     if request.method == 'POST':
         data = request.get_json()
         time = data.get('time')
@@ -88,12 +68,18 @@ def generate_recording():
             return jsonify({'status': 'error', 'message': str(e)}), 500
 
         file_name = os.path.split(file_path)[-1]
-        file_url = 'http://localhost:5000/download/' + file_name 
+        # file_url = url_for('download_file', filename=file_name, _external=True)
+        file_url = 'http://localhost:5000/download/' + file_name  # todo
 
         return jsonify({'status': 'success', 'message': 'Data processed successfully!', 'file_url': file_url})
 
 
 def generate_output_sequence(results_folder, sec_to_create, bpm, type_):
+    """
+    Generate a synthetic output sequence based on given parameters, save it, and return the file path.
+    Supports generation via GAN or VAE models.
+    """
+    
     os.makedirs(results_folder, exist_ok = True)
 
     sample_frequency = 128
@@ -161,7 +147,7 @@ def generate_output_sequence(results_folder, sec_to_create, bpm, type_):
             # Ensure that the data is a 2D array
             model_data = {"signature_name": "serving_default", "instances": interpolated_points_reshaped.tolist()}
             # model_data = {"signature_name": "serving_default", "instances": interpolated_points_array.tolist()}
-            model_response = requests.post(decoder_url, json=model_data)  # Change to vae_url if using full VAE model
+            model_response = requests.post(decoder_url, json=model_data)
 
             if model_response.status_code == 200:
                 sample = np.array(model_response.json()['predictions'])
@@ -174,15 +160,15 @@ def generate_output_sequence(results_folder, sec_to_create, bpm, type_):
 
     # Adjust heart rate
 
-    logging.info(f"Combined output size: {combined_output.size}")
+    # logging.info(f"Combined output size: {combined_output.size}")
     wd, m = hp.process(combined_output, sample_frequency)
     calculated_bpm = m['bpm']
 
-    logging.info(f"Original BPM: {calculated_bpm}")
+    # logging.info(f"Original BPM: {calculated_bpm}")
 
     output_df = modulate_bpm(sec_to_create, bpm, combined_output, original_bpm, sample_frequency)
-    wd, m = hp.process(combined_output.flatten(), sample_frequency)
-    gen_bpm = m['bpm']
+    # wd, m = hp.process(combined_output.flatten(), sample_frequency)
+    # gen_bpm = m['bpm']
 
     # Write to csv
     file_path = f'{results_folder}/recording_data.csv'

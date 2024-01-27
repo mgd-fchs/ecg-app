@@ -10,6 +10,21 @@ import scipy.interpolate
 logging.basicConfig(level=logging.INFO)
 
 
+def log_request_response(request, response):
+    request_data = request.get_json() if request.method == 'POST' else {}
+    logging.info(f"Request URL: {request.url}")
+    logging.info(f"Request Method: {request.method}")
+    logging.info(f"Request Data: {request_data}")
+    logging.info(f"Response Data: {response}")
+
+
+def log_external_request_response(url, request_data, response):
+    logging.info(f"External Request URL: {url}")
+    logging.info(f"Request Data: {request_data}")
+    logging.info(f"Response Status Code: {response.status_code}")
+    logging.info(f"Response Data: {response.text}")
+
+
 def interpolate_points(p1, p2, n_steps=10):
     """ Linear interpolation between two points in the latent space. """
     ratios = np.linspace(0, 1, num=n_steps)

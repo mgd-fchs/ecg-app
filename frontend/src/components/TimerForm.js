@@ -8,7 +8,7 @@ const TimerForm = () => {
   const [fileUrl, setFileUrl] = useState('');
   const [showToast, setShowToast] = useState(false); 
   const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState(''); // For differentiating between error and success messages
+  const [messageType, setMessageType] = useState(''); 
 
   const Toast = ({ message, type }) => {
     return (
@@ -56,8 +56,6 @@ const TimerForm = () => {
     .then(response => {
       // Check if the response was ok (status code 200-299)
       if (!response.ok) {
-        // If response is not ok, we still want to parse the JSON body
-        // to get the error message sent from the server
         return response.json().then(errData => {
           throw new Error(errData.message || 'Something went wrong.');
         });
@@ -89,7 +87,7 @@ const TimerForm = () => {
   return (
     <div className="form-container">
       <form onSubmit={handleSubmit}>
-        {/* Form fields and Generate button */}
+        {}
         <div>
           <label>Length of Recording (min:seconds): </label>
           <input

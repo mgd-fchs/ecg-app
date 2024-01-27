@@ -23,7 +23,7 @@ button {
 }
 
 button {
-  background-color: #008cba; /* Replace with your brand color */
+  background-color: #008cba; 
   color: white;
   font-size: 16px;
   cursor: pointer;
@@ -31,10 +31,10 @@ button {
 }
 
 button:hover {
-  background-color: #005f6b; /* Darken the button on hover */
+  background-color: #005f6b;
 }
 
-/* Add media query for responsiveness */
+
 @media (max-width: 600px) {
   .form-container {
     width: 90%;
@@ -42,7 +42,6 @@ button:hover {
   }
 }
 
-/* Animation example for the background */
 @keyframes animatedBackground {
   from { background-position: 0 0; }
   to { background-position: 100% 0; }
@@ -55,18 +54,18 @@ button:hover {
 }
 
 .toast-message {
-  position: fixed; /* Fix position to the top */
-  top: 10px; /* Distance from top */
-  left: 50%; /* Center horizontally */
-  transform: translateX(-50%); /* Align center */
+  position: fixed;
+  top: 10px; 
+  left: 50%; 
+  transform: translateX(-50%);
   padding: 10px;
   margin: 0;
   border: 1px solid transparent;
   border-radius: 4px;
   text-align: center;
-  z-index: 1000; /* Ensure toast is above other elements */
-  width: 280px; /* Set a fixed width */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Subtle shadow for depth */
+  z-index: 1000;
+  width: 280px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .toast-message.success {
